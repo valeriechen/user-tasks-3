@@ -1,0 +1,19 @@
+# Task: Add Smooth Transitions Between Plots in Matplotlib
+
+## Objective
+Clone the Matplotlib repository and implement a new functionality that enables smooth animations/transitions between different states of a plot.
+
+## Requirements
+1. Create a new function called `smooth_transition(from_data, to_data, duration=1.0, fps=30, **kwargs)` that:
+   - Takes initial and final data states
+   - Creates a smooth animation transitioning between the states
+   - Supports different plot types (line, scatter, bar, etc.)
+   - Allows customization of transition duration and frames per second
+   - Supports transitions of various plot properties:
+     - Data values (y-values in line plots, heights in bar charts, etc.)
+     - Colors
+     - Sizes/widths
+     - Positions
+   - Provides options for different easing functions (linear, ease-in, ease-out, etc.)
+2. Implement a complementary function `transition_plot_state(fig_from, fig_to, duration=1.0, fps=30)` that can transition between two completely different figure states
+3. Create a demo showcasing various transition types

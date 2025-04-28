@@ -1,0 +1,14 @@
+# Task: Add Dark Mode Toggle to Matplotlib
+
+## Objective
+Add a new functionality that allows users to toggle any existing plot to dark mode with a single function call.
+
+## Requirements
+1. Create a new function called `toggle_dark_mode(ax=None, fig=None)` that:
+   - Can be applied to either a specific axis, a figure, or the current figure if none is specified
+   - Converts the plot background to a dark color (e.g., #121212)
+   - Inverts text colors from dark to light
+   - Adjusts plot elements (grid lines, tick marks, etc.) to be visible on dark background
+   - Preserves the original colors of data elements (lines, points, bars) or provides an option to adjust them for better visibility
+2. The function should be reversible (calling it again should toggle back to light mode)
+3. Create a simple demo script showing the functionality in action
