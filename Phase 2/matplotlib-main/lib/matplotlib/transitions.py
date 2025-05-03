@@ -64,8 +64,8 @@ EASING_FUNCTIONS = {
 }
 
 
-def _interpolate_values(from_val: np.ndarray, to_val: np.ndarray, t: float, 
-                        easing_func: Callable[[float], float]) -> np.ndarray:
+def _interpolate_values(from_val, to_val, t: float, 
+                        easing_func: Callable[[float], float]):
     """
     Interpolate between two arrays of values using an easing function.
     
@@ -86,11 +86,18 @@ def _interpolate_values(from_val: np.ndarray, to_val: np.ndarray, t: float,
         Interpolated values
     """
     t_eased = easing_func(t)
+    
+    # Convert lists to numpy arrays if needed
+    if isinstance(from_val, (list, tuple)):
+        from_val = np.array(from_val)
+    if isinstance(to_val, (list, tuple)):
+        to_val = np.array(to_val)
+        
     return from_val + (to_val - from_val) * t_eased
 
 
 def _interpolate_color(from_color, to_color, t: float, 
-                      easing_func: Callable[[float], float]) -> Union[str, Tuple]:
+                      easing_func: Callable[[float], float]) -> Tuple:
     """
     Interpolate between two colors using an easing function.
     
@@ -108,21 +115,25 @@ def _interpolate_color(from_color, to_color, t: float,
     Returns
     -------
     color
-        Interpolated color
+        Interpolated color as RGBA tuple
     """
     t_eased = easing_func(t)
     
-    # Convert colors to RGBA
-    from_rgba = mcolors.to_rgba(from_color)
-    to_rgba = mcolors.to_rgba(to_color)
-    
-    # Interpolate RGBA values
-    r = from_rgba[0] + (to_rgba[0] - from_rgba[0]) * t_eased
-    g = from_rgba[1] + (to_rgba[1] - from_rgba[1]) * t_eased
-    b = from_rgba[2] + (to_rgba[2] - from_rgba[2]) * t_eased
-    a = from_rgba[3] + (to_rgba[3] - from_rgba[3]) * t_eased
-    
-    return (r, g, b, a)
+    try:
+        # Convert colors to RGBA
+        from_rgba = mcolors.to_rgba(from_color)
+        to_rgba = mcolors.to_rgba(to_color)
+        
+        # Interpolate RGBA values
+        r = from_rgba[0] + (to_rgba[0] - from_rgba[0]) * t_eased
+        g = from_rgba[1] + (to_rgba[1] - from_rgba[1]) * t_eased
+        b = from_rgba[2] + (to_rgba[2] - from_rgba[2]) * t_eased
+        a = from_rgba[3] + (to_rgba[3] - from_rgba[3]) * t_eased
+        
+        return (r, g, b, a)
+    except Exception:
+        # If color interpolation fails, return the from_color
+        return from_color
 
 
 def _interpolate_colors(from_colors, to_colors, t: float, 
@@ -214,9 +225,14 @@ def _update_scatter_data(scatter, from_data, to_data, t: float,
     
     # Update colors if provided
     if 'colors' in from_data and 'colors' in to_data:
-        colors = _interpolate_colors(from_data['colors'], to_data['colors'], t, easing_func)
-        scatter.set_facecolor(colors)
-        scatter.set_edgecolor(colors)
+        try:
+            colors = _interpolate_colors(from_data['colors'], to_data['colors'], t, easing_func)
+            scatter.set_facecolor(colors)
+            scatter.set_edgecolor(colors)
+        except Exception as e:
+            # If color interpolation fails, skip it
+            print(f"Warning: Color interpolation failed: {e}")
+            pass
 
 
 def _update_bar_data(bars, from_data, to_data, t: float, 
@@ -258,10 +274,21 @@ def _update_bar_data(bars, from_data, to_data, t: float,
     
     # Update colors if provided
     if 'colors' in from_data and 'colors' in to_data:
-        colors = _interpolate_colors(from_data['colors'], to_data['colors'], t, easing_func)
-        for bar, color in zip(bars, colors):
-            bar.set_facecolor(color)
-            bar.set_edgecolor(color)
+        try:
+            colors = _interpolate_colors(from_data['colors'], to_data['colors'], t, easing_func)
+            if isinstance(colors, (list, tuple)) and len(colors) == len(bars):
+                for bar, color in zip(bars, colors):
+                    bar.set_facecolor(color)
+                    bar.set_edgecolor(color)
+            else:
+                # Single color for all bars
+                for bar in bars:
+                    bar.set_facecolor(colors)
+                    bar.set_edgecolor(colors)
+        except Exception as e:
+            # If color interpolation fails, skip it
+            print(f"Warning: Color interpolation failed: {e}")
+            pass
 
 
 def smooth_transition(from_data: Dict, to_data: Dict, 
@@ -495,7 +522,7 @@ def transition_plot_state(fig_from: Figure, fig_to: Figure,
         
         # Store bar plots
         for container in ax_from.containers:
-            if isinstance(container, plt.matplotlib.container.BarContainer):
+            if str(type(container).__name__) == 'BarContainer':
                 heights = [bar.get_height() for bar in container]
                 widths = [bar.get_width() for bar in container]
                 positions = [bar.get_x() for bar in container]
@@ -602,9 +629,9 @@ def transition_plot_state(fig_from: Figure, fig_to: Figure,
             
             # Update bar plots
             container_from_list = [c for c in ax_from.containers 
-                                 if isinstance(c, plt.container.BarContainer)]
+                                 if str(type(c).__name__) == 'BarContainer']
             container_to_list = [c for c in ax_to.containers 
-                               if isinstance(c, plt.container.BarContainer)]
+                               if str(type(c).__name__) == 'BarContainer']
             
             for i, (container_from, container_to) in enumerate(zip(container_from_list, container_to_list)):
                 # Get the corresponding bars in the animation figure
